@@ -88,6 +88,11 @@ resource "aws_eip" "prebid_server_nat_eip" {
   }
 }
 
+resource "aws_eip_association" "prebid_server_eip_association" {
+  instance_id   = aws_instance.prebid_server.id
+  allocation_id  = aws_eip.prebid_server_nat_eip.id
+}
+
 resource "aws_route_table" "prebid_server_private_rt" {
   vpc_id = data.terraform_remote_state.vpc.outputs.prebid_server_vpc_id
 
