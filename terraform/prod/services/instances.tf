@@ -70,3 +70,43 @@ resource "aws_instance" "prebid_server" {
     Env  = "production"
   }
 }
+
+resource "aws_nat_gateway" "prebid_server_nat_gw" {
+  allocation_id = aws_eip.prebid_server_nat_eip.id
+  subnet_id     = data.terraform_remote_state.vpc.outputs.prebid_server_public_subnet_a_id
+
+  tags = {
+    Name = "prebid_server_nat_gw"
+  }
+}
+
+resource "aws_eip" "prebid_server_nat_eip" {
+  domain = "vpc"
+
+  tags = {
+    Name = "prebid_server_nat_eip"
+  }
+}
+
+resource "aws_route_table" "prebid_server_private_rt" {
+  vpc_id = data.terraform_remote_state.vpc.outputs.prebid_server_vpc_id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.prebid_server_nat_gw.id
+  }
+
+  tags = {
+    Name = "prebid_server_private_rt"
+  }
+}
+
+resource "aws_route_table_association" "prebid_server_private_rt_assoc" {
+  subnet_id      = data.terraform_remote_state.vpc.outputs.prebid_server_subnet_1_id
+  route_table_id = aws_route_table.prebid_server_private_rt.id
+}
+
+resource "aws_route_table_association" "prebid_server_private_rt_2_assoc" {
+  subnet_id      = data.terraform_remote_state.vpc.outputs.prebid_server_subnet_2_id
+  route_table_id = aws_route_table.prebid_server_private_rt.id
+}
